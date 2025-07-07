@@ -1,0 +1,9 @@
+[package]
+name = "footcomp-sim"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+embedded-graphics-simulator = "0.7.0"
+footcomp-ui = { path = "../footcomp-ui" }
+edgy = { path = "A:/edgy" } # TODO: Change to git/crates.io

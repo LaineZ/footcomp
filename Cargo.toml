@@ -1,0 +1,3 @@
+[workspace]
+members = ["footcomp-sim", "footcomp-ui"]
+resolver = "2"
