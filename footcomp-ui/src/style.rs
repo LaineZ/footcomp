@@ -1,5 +1,6 @@
 use edgy::{
-    embedded_graphics::pixelcolor::BinaryColor, themes::{DynamicStyle, WidgetStyle}
+    embedded_graphics::pixelcolor::BinaryColor,
+    themes::{DynamicStyle, WidgetStyle},
 };
 
 pub const BUTTON_STYLE: DynamicStyle<BinaryColor> = DynamicStyle {
@@ -20,3 +21,9 @@ pub const BUTTON_STYLE: DynamicStyle<BinaryColor> = DynamicStyle {
         .background_color(BinaryColor::Off)
         .foreground_color(BinaryColor::On),
 };
+
+pub const BATTERY_INDICATOR_STYLE: WidgetStyle<BinaryColor> = WidgetStyle::new()
+    .background_color(BinaryColor::Off)
+    .foreground_color(BinaryColor::On)
+    .storke(1, BinaryColor::On)
+    .accent_color(BinaryColor::On);

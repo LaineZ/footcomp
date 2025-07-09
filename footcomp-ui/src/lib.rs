@@ -1,54 +1,31 @@
 #![no_std]
-
 extern crate alloc;
 
-use alloc::string::String;
+use core::fmt::Debug;
+
+use alloc::string::ToString;
+use chrono::{DateTime, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use edgy::{
     embedded_graphics::{
-        mono_font::ascii::FONT_5X8,
+        mono_font::ascii::{FONT_4X6, FONT_5X8},
         pixelcolor::BinaryColor,
         prelude::{DrawTarget, Size},
         text,
     },
     prelude::*,
     widgets::{
+        battery::{Battery, BatteryStyle},
         grid_layout::GridLayoutBuilder,
-        label::{Label, LabelOptions, SevenSegmentStyleBuilder},
+        label::SevenSegmentStyleBuilder,
         linear_layout::LinearLayoutBuilder,
         margin_layout::MarginLayout,
     },
 };
 
-use crate::widgets::tabbar::TabBarLabel;
+use crate::{style::BATTERY_INDICATOR_STYLE, widgets::tabbar::TabBarLabel};
 
 pub mod style;
 pub mod widgets;
-
-fn small_seven_segment_text<'a, D: DrawTarget<Color = BinaryColor> + 'a, S: Into<String>>(
-    text: S,
-    heading_text: &str,
-) -> WidgetObject<'a, D, BinaryColor> {
-    let style = SevenSegmentStyleBuilder::new()
-        .digit_size(Size::new(8, 16))
-        .segment_width(2)
-        .digit_spacing(1)
-        .segment_color(BinaryColor::On)
-        .build();
-
-    let mut layout = LinearLayoutBuilder::default()
-        .direction(LayoutDirection::Vertical)
-        .horizontal_alignment(LayoutAlignment::Center);
-
-    layout.seven_segment(text, style);
-    layout.add_widget(Label::new(
-        heading_text,
-        LabelOptions::new()
-            .alignment(text::Alignment::Center)
-            .line_height(0),
-        &FONT_5X8,
-    ));
-    layout.finish()
-}
 
 pub fn main_ui<'a, D: DrawTarget<Color = BinaryColor> + 'a>() -> WidgetObject<'a, D, BinaryColor> {
     let mut ui = LinearLayoutBuilder::default()
@@ -56,7 +33,7 @@ pub fn main_ui<'a, D: DrawTarget<Color = BinaryColor> + 'a>() -> WidgetObject<'a
         .horizontal_alignment(LayoutAlignment::Center)
         .direction(LayoutDirection::Horizontal);
 
-    ui.add_widget_obj(small_seven_segment_text("0000", "ODO KM"));
+    ui.add_widget_obj(widgets::small_seven_segment_text("0000", "ODO km"));
 
     let mut speed = LinearLayoutBuilder::default()
         .vertical_alignment(LayoutAlignment::Center)
@@ -73,10 +50,10 @@ pub fn main_ui<'a, D: DrawTarget<Color = BinaryColor> + 'a>() -> WidgetObject<'a
     speed.seven_segment("50", style);
     speed.label("km/h", text::Alignment::Center, &FONT_5X8);
 
-    ui.margin_layout(margin!(0, 5), |ui| {
+    ui.margin_layout(margin!(0, 6), |ui| {
         ui.add_widget_obj(speed.finish());
     });
-    ui.add_widget_obj(small_seven_segment_text("00:00", "TIME"));
+    ui.add_widget_obj(widgets::small_seven_segment_text("00:00", "TIME"));
 
     ui.finish()
 }
@@ -85,9 +62,31 @@ pub fn base_ui<'a, D: DrawTarget<Color = BinaryColor> + 'a>() -> WidgetObject<'a
     let mut margin_layout = MarginLayout::new(margin!(3));
 
     let mut main_grid = GridLayoutBuilder::default()
-        .add_row(88)
+        .add_row(12)
+        .add_row(76)
         .add_row(12)
         .add_column(100);
+
+    let ts: i64 = 1_720_000_000;
+
+    let nt = DateTime::from_timestamp(ts, 0).unwrap();
+
+    main_grid.horizontal_linear_layout(LayoutAlignment::Stretch, |ui| {
+        ui.label(
+            nt.format("%H:%M").to_string(),
+            text::Alignment::Left,
+            &FONT_4X6,
+        );
+
+        ui.horizontal_linear_layout(LayoutAlignment::Center, |ui| {
+            ui.label("Tue Jul 2", text::Alignment::Center, &FONT_4X6);
+        });
+
+        ui.horizontal_linear_layout(LayoutAlignment::End, |ui| {
+            let bat_style = BatteryStyle::new(BATTERY_INDICATOR_STYLE, LayoutDirection::Horizontal);
+            ui.add_widget(Battery::new(30, false, Size::new(16, 6), bat_style));
+        });
+    });
 
     main_grid.add_widget_obj(main_ui());
 
