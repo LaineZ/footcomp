@@ -7,6 +7,8 @@ use edgy::{
 };
 use embedded_graphics_simulator::{OutputSettingsBuilder, SimulatorDisplay, Window, sdl2::Keycode};
 use footcomp_ui::chrono::DateTime;
+use footcomp_ui::views::log::{self, LogPage};
+use footcomp_ui::views::main::MainPage;
 
 fn main() -> Result<(), core::convert::Infallible> {
     let display = SimulatorDisplay::<BinaryColor>::new(Size::new(128, 64));
@@ -19,7 +21,8 @@ fn main() -> Result<(), core::convert::Infallible> {
     let mut window = Window::new("a bit edgy ui", &output_settings);
     let mut ui_ctx = UiContext::new(display, themes::hope_diamond::apply());
     let mut base_ui = footcomp_ui::BaseUi::default();
-    let mut main_view = footcomp_ui::DisplayPage::default();
+    let mut main_view = MainPage::default();
+    let mut log_view = LogPage::default();
 
     let mut now = Instant::now();
     loop {
@@ -63,6 +66,6 @@ fn main() -> Result<(), core::convert::Infallible> {
         }
 
         ui_ctx.draw_target.clear(BinaryColor::Off)?;
-        ui_ctx.update(base_ui.update(&main_view));
+        ui_ctx.update(base_ui.update(&log_view));
     }
 }

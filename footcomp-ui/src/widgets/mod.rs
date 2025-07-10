@@ -1,11 +1,6 @@
 use alloc::string::String;
 use edgy::{
-    embedded_graphics::{
-        mono_font::ascii::{FONT_4X6, FONT_5X8},
-        pixelcolor::BinaryColor,
-        prelude::*,
-        text,
-    },
+    embedded_graphics::{mono_font::ascii::FONT_5X8, pixelcolor::BinaryColor, prelude::*, text},
     prelude::*,
     widgets::{
         label::{Label, LabelOptions, SevenSegmentStyleBuilder},

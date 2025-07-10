@@ -1,9 +1,9 @@
 #![no_std]
 extern crate alloc;
 
-use crate::style::BATTERY_INDICATOR_STYLE;
+use crate::{style::BATTERY_INDICATOR_STYLE, views::View};
 use alloc::{fmt, format, string::ToString};
-use chrono::{Date, DateTime, Utc};
+use chrono::{DateTime, Utc};
 use core::{fmt::Display, time::Duration};
 use edgy::{
     embedded_graphics::{
@@ -16,18 +16,24 @@ use edgy::{
     widgets::{
         battery::{Battery, BatteryStyle},
         grid_layout::GridLayoutBuilder,
-        label::SevenSegmentStyleBuilder,
-        linear_layout::LinearLayoutBuilder,
         margin_layout::MarginLayout,
     },
 };
 
 pub mod style;
 pub mod widgets;
+pub mod views;
 pub use chrono;
 
-pub trait View<'a> {
-    fn update<D: DrawTarget<Color = BinaryColor> + 'a>(&self) -> WidgetObject<'a, D, BinaryColor>;
+pub enum Page {
+    Main,
+    Log,
+}
+
+impl Default for Page {
+    fn default() -> Self {
+        Page::Main
+    }
 }
 
 pub struct FormatTime(pub Duration);
@@ -38,63 +44,6 @@ impl Display for FormatTime {
         let mins = (total_secs % 3600) / 60;
         let secs = total_secs % 60;
         write!(f, "{:02}:{:02}:{:02}", hours, mins, secs)
-    }
-}
-
-#[derive(Default)]
-pub struct DisplayPage {
-    pub speed_km: u8,
-    pub trip_km: u16,
-    pub ride_time: Duration,
-}
-
-impl<'a> View<'a> for DisplayPage {
-    fn update<D: DrawTarget<Color = BinaryColor> + 'a>(&self) -> WidgetObject<'a, D, BinaryColor> {
-        let mut ui = LinearLayoutBuilder::default()
-            .vertical_alignment(LayoutAlignment::Center)
-            .horizontal_alignment(LayoutAlignment::Center)
-            .direction(LayoutDirection::Horizontal);
-
-        ui.add_widget_obj(widgets::small_seven_segment_text(
-            format!("{:0>4}", self.trip_km.clamp(0, 9999)),
-            "TRIP km",
-        ));
-
-        let mut speed = LinearLayoutBuilder::default()
-            .vertical_alignment(LayoutAlignment::Center)
-            .horizontal_alignment(LayoutAlignment::Center)
-            .direction(LayoutDirection::Vertical);
-
-        let style = SevenSegmentStyleBuilder::new()
-            .digit_size(Size::new(16, 32))
-            .segment_width(4)
-            .digit_spacing(4)
-            .segment_color(BinaryColor::On)
-            .build();
-
-        speed.seven_segment(format!("{:0>2}", self.speed_km.clamp(0, 99)), style);
-        speed.label("km/h", text::Alignment::Center, &FONT_5X8);
-
-        ui.margin_layout(margin!(0, 6), |ui| {
-            ui.add_widget_obj(speed.finish());
-        });
-        ui.add_widget_obj(widgets::very_small_seven_segment_text(
-            format!("{}", FormatTime(self.ride_time)),
-            "TIME",
-        ));
-
-        ui.finish()
-    }
-}
-
-pub enum Page {
-    Main,
-    Log,
-}
-
-impl Default for Page {
-    fn default() -> Self {
-        Page::Main
     }
 }
 
