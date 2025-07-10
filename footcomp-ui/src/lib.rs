@@ -1,10 +1,10 @@
 #![no_std]
 extern crate alloc;
 
-use core::{fmt::Display, time::Duration};
-
+use crate::style::BATTERY_INDICATOR_STYLE;
 use alloc::{fmt, format, string::ToString};
-use chrono::DateTime;
+use chrono::{Date, DateTime, Utc};
+use core::{fmt::Display, time::Duration};
 use edgy::{
     embedded_graphics::{
         mono_font::ascii::{FONT_4X6, FONT_5X8},
@@ -22,13 +22,15 @@ use edgy::{
     },
 };
 
-use crate::{style::BATTERY_INDICATOR_STYLE};
-
 pub mod style;
 pub mod widgets;
+pub use chrono;
+
+pub trait View<'a> {
+    fn update<D: DrawTarget<Color = BinaryColor> + 'a>(&self) -> WidgetObject<'a, D, BinaryColor>;
+}
 
 pub struct FormatTime(pub Duration);
-
 impl Display for FormatTime {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let total_secs = self.0.as_secs();
@@ -40,20 +42,23 @@ impl Display for FormatTime {
 }
 
 #[derive(Default)]
-struct DisplayPage {
-    pub speed: u8,
+pub struct DisplayPage {
+    pub speed_km: u8,
     pub trip_km: u16,
     pub ride_time: Duration,
 }
 
-impl DisplayPage {
-    fn draw<'a, D: DrawTarget<Color = BinaryColor> + 'a>(&self) -> WidgetObject<'a, D, BinaryColor> {
+impl<'a> View<'a> for DisplayPage {
+    fn update<D: DrawTarget<Color = BinaryColor> + 'a>(&self) -> WidgetObject<'a, D, BinaryColor> {
         let mut ui = LinearLayoutBuilder::default()
             .vertical_alignment(LayoutAlignment::Center)
             .horizontal_alignment(LayoutAlignment::Center)
             .direction(LayoutDirection::Horizontal);
 
-        ui.add_widget_obj(widgets::small_seven_segment_text(format!("{:0>4}", self.trip_km), "TRIP km"));
+        ui.add_widget_obj(widgets::small_seven_segment_text(
+            format!("{:0>4}", self.trip_km.clamp(0, 9999)),
+            "TRIP km",
+        ));
 
         let mut speed = LinearLayoutBuilder::default()
             .vertical_alignment(LayoutAlignment::Center)
@@ -67,56 +72,80 @@ impl DisplayPage {
             .segment_color(BinaryColor::On)
             .build();
 
-        speed.seven_segment(format!("{:0>2}", self.speed), style);
+        speed.seven_segment(format!("{:0>2}", self.speed_km.clamp(0, 99)), style);
         speed.label("km/h", text::Alignment::Center, &FONT_5X8);
 
         ui.margin_layout(margin!(0, 6), |ui| {
             ui.add_widget_obj(speed.finish());
         });
-        ui.add_widget_obj(widgets::very_small_seven_segment_text(format!("{}", FormatTime(self.ride_time)), "TIME"));
+        ui.add_widget_obj(widgets::very_small_seven_segment_text(
+            format!("{}", FormatTime(self.ride_time)),
+            "TIME",
+        ));
 
         ui.finish()
     }
 }
 
-pub fn base_ui<'a, D: DrawTarget<Color = BinaryColor> + 'a>() -> WidgetObject<'a, D, BinaryColor> {
-    let mut margin_layout = MarginLayout::new(margin!(3));
+pub enum Page {
+    Main,
+    Log,
+}
 
-    let mut main_grid = GridLayoutBuilder::default()
-        .add_row(12)
-        .add_row(76)
-        .add_row(12)
-        .add_column(100);
+impl Default for Page {
+    fn default() -> Self {
+        Page::Main
+    }
+}
 
-    let ts: i64 = 1_720_000_000;
-    let nt = DateTime::from_timestamp(ts, 0).unwrap();
+#[derive(Default)]
+pub struct BaseUi {
+    pub oat: i8,
+    pub battery_percentage: u8,
+    pub time: DateTime<Utc>,
+}
 
-    let mut display_page = DisplayPage::default();
+impl BaseUi {
+    pub fn update<'a, D: DrawTarget<Color = BinaryColor> + 'a>(
+        &self,
+        page: &impl View<'a>,
+    ) -> WidgetObject<'a, D, BinaryColor> {
+        let mut margin_layout = MarginLayout::new(margin!(3));
 
-    display_page.speed = 2;
-    display_page.trip_km = 401;
-    display_page.ride_time = Duration::from_secs(5940 + 59);
+        let mut main_grid = GridLayoutBuilder::default()
+            .add_row(12)
+            .add_row(76)
+            .add_row(12)
+            .add_column(100);
 
-    main_grid.horizontal_linear_layout(LayoutAlignment::Stretch, |ui| {
-        ui.label(
-            nt.format("%H:%M Jul 8").to_string(),
-            text::Alignment::Left,
-            &FONT_4X6,
-        );
+        main_grid.horizontal_linear_layout(LayoutAlignment::Stretch, |ui| {
+            ui.label(
+                self.time.format("%H:%M %A %d").to_string(),
+                text::Alignment::Left,
+                &FONT_4X6,
+            );
 
-        ui.horizontal_linear_layout(LayoutAlignment::End, |ui| {
-            let bat_style = BatteryStyle::new(BATTERY_INDICATOR_STYLE, LayoutDirection::Horizontal);
-            ui.add_widget(Battery::new(30, false, Size::new(16, 6), bat_style));
+            ui.horizontal_linear_layout(LayoutAlignment::End, |ui| {
+                let bat_style =
+                    BatteryStyle::new(BATTERY_INDICATOR_STYLE, LayoutDirection::Horizontal);
+                ui.add_widget(Battery::new(
+                    self.battery_percentage,
+                    false,
+                    Size::new(16, 6),
+                    bat_style,
+                ));
+            });
         });
-    });
 
-    main_grid.add_widget_obj(display_page.draw());
-
-    main_grid.horizontal_linear_layout(LayoutAlignment::Start, |ui| {
-        ui.label("OAT: 28C", text::Alignment::Left, &FONT_5X8);
-    });
-
-    margin_layout.add_widget_obj(main_grid.finish());
-
-    margin_layout.finish()
+        main_grid.add_widget_obj(page.update());
+        main_grid.horizontal_linear_layout(LayoutAlignment::Start, |ui| {
+            ui.label(
+                format!("OAT: {}C", self.oat),
+                text::Alignment::Left,
+                &FONT_5X8,
+            );
+        });
+        margin_layout.add_widget_obj(main_grid.finish());
+        margin_layout.finish()
+    }
 }

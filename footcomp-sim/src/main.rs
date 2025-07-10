@@ -1,12 +1,12 @@
+use std::time::{Duration, Instant, SystemTime};
+
+use edgy::embedded_graphics::{pixelcolor::BinaryColor, prelude::*};
 use edgy::{
-    themes::{self},
     UiContext,
+    themes::{self},
 };
-use edgy::embedded_graphics::{
-    pixelcolor::BinaryColor,
-    prelude::*
-};
-use embedded_graphics_simulator::{sdl2::Keycode, OutputSettingsBuilder, SimulatorDisplay, Window};
+use embedded_graphics_simulator::{OutputSettingsBuilder, SimulatorDisplay, Window, sdl2::Keycode};
+use footcomp_ui::chrono::DateTime;
 
 fn main() -> Result<(), core::convert::Infallible> {
     let display = SimulatorDisplay::<BinaryColor>::new(Size::new(128, 64));
@@ -18,8 +18,30 @@ fn main() -> Result<(), core::convert::Infallible> {
 
     let mut window = Window::new("a bit edgy ui", &output_settings);
     let mut ui_ctx = UiContext::new(display, themes::hope_diamond::apply());
+    let mut base_ui = footcomp_ui::BaseUi::default();
+    let mut main_view = footcomp_ui::DisplayPage::default();
 
+    let mut now = Instant::now();
     loop {
+        let system_now = SystemTime::now();
+        let timestamp = system_now
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+
+        base_ui.time = DateTime::from_timestamp(timestamp as i64, 0).unwrap();
+
+        if now.elapsed() > Duration::from_millis(200) {
+            main_view.speed_km += 1;
+            base_ui.oat += 1;
+
+            main_view.ride_time += now.elapsed();
+            now = Instant::now();
+        }
+        main_view.speed_km %= 60;
+        base_ui.oat %= 30;
+        //base_ui.time = DateTime::now();
+
         window.update(&ui_ctx.draw_target);
 
         for event in window.events() {
@@ -41,6 +63,6 @@ fn main() -> Result<(), core::convert::Infallible> {
         }
 
         ui_ctx.draw_target.clear(BinaryColor::Off)?;
-        ui_ctx.update(footcomp_ui::base_ui());
+        ui_ctx.update(base_ui.update(&main_view));
     }
 }
