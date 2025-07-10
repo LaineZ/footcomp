@@ -66,6 +66,6 @@ fn main() -> Result<(), core::convert::Infallible> {
         }
 
         ui_ctx.draw_target.clear(BinaryColor::Off)?;
-        ui_ctx.update(base_ui.update(&log_view));
+        ui_ctx.update(base_ui.update(&main_view));
     }
 }

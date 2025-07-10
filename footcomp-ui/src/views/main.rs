@@ -29,6 +29,7 @@ impl<'a> View<'a> for MainPage {
         let mut ui = LinearLayoutBuilder::default()
             .vertical_alignment(LayoutAlignment::Center)
             .horizontal_alignment(LayoutAlignment::Center)
+            .gap(5)
             .direction(LayoutDirection::Horizontal);
 
         ui.add_widget_obj(widgets::small_seven_segment_text(
@@ -51,9 +52,7 @@ impl<'a> View<'a> for MainPage {
         speed.seven_segment(format!("{:0>2}", self.speed_km.clamp(0, 99)), style);
         speed.label("km/h", text::Alignment::Center, &FONT_5X8);
 
-        ui.margin_layout(margin!(0, 6), |ui| {
-            ui.add_widget_obj(speed.finish());
-        });
+        ui.add_widget_obj(speed.finish());
         ui.add_widget_obj(widgets::very_small_seven_segment_text(
             format!("{}", FormatTime(self.ride_time)),
             "TIME",
