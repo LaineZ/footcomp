@@ -7,7 +7,7 @@ use chrono::{DateTime, Utc};
 use core::{fmt::Display, time::Duration};
 use edgy::{
     embedded_graphics::{
-        mono_font::ascii::{FONT_4X6, FONT_5X8},
+        mono_font::ascii::{FONT_4X6, FONT_5X7},
         pixelcolor::BinaryColor,
         prelude::{DrawTarget, Size},
         text,
@@ -65,6 +65,7 @@ impl BaseUi {
             .add_row(12)
             .add_row(76)
             .add_row(12)
+            .gap(2)
             .add_column(100);
 
         main_grid.horizontal_linear_layout(LayoutAlignment::Stretch, |ui| {
@@ -91,7 +92,7 @@ impl BaseUi {
             ui.label(
                 format!("OAT: {}C", self.oat),
                 text::Alignment::Left,
-                &FONT_5X8,
+                &FONT_5X7,
             );
         });
         margin_layout.add_widget_obj(main_grid.finish());

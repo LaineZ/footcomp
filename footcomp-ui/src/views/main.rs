@@ -3,7 +3,7 @@ use core::time::Duration;
 use alloc::format;
 use edgy::{
     embedded_graphics::{
-        mono_font::ascii::FONT_5X8,
+        mono_font::ascii::FONT_5X7,
         pixelcolor::BinaryColor,
         prelude::{DrawTarget, Size},
         text,
@@ -50,7 +50,7 @@ impl<'a> View<'a> for MainPage {
             .build();
 
         speed.seven_segment(format!("{:0>2}", self.speed_km.clamp(0, 99)), style);
-        speed.label("km/h", text::Alignment::Center, &FONT_5X8);
+        speed.label("km/h", text::Alignment::Center, &FONT_5X7);
 
         ui.add_widget_obj(speed.finish());
         ui.add_widget_obj(widgets::very_small_seven_segment_text(

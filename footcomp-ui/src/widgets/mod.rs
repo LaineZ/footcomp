@@ -1,6 +1,6 @@
 use alloc::string::String;
 use edgy::{
-    embedded_graphics::{mono_font::ascii::FONT_5X8, pixelcolor::BinaryColor, prelude::*, text},
+    embedded_graphics::{mono_font::ascii::FONT_5X7, pixelcolor::BinaryColor, prelude::*, text},
     prelude::*,
     widgets::{
         label::{Label, LabelOptions, SevenSegmentStyleBuilder},
@@ -29,7 +29,7 @@ pub fn small_seven_segment_text<'a, D: DrawTarget<Color = BinaryColor> + 'a, S: 
     layout.add_widget(Label::new(
         heading_text,
         LabelOptions::new().alignment(text::Alignment::Center),
-        &FONT_5X8,
+        &FONT_5X7,
     ));
     layout.finish()
 }
@@ -57,7 +57,7 @@ pub fn very_small_seven_segment_text<
     layout.add_widget(Label::new(
         heading_text,
         LabelOptions::new().alignment(text::Alignment::Center),
-        &FONT_5X8,
+        &FONT_5X7,
     ));
     layout.finish()
 }
