@@ -87,7 +87,7 @@ fn main() -> ! {
 
     loop {
         ui_context.draw_target.clear();
-        ui_context.update(base_ui.update(&log_view));
+        ui_context.update(base_ui.update(&main_view));
         let _ = ui_context.draw_target.flush();
     }
 }

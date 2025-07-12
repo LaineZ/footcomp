@@ -59,8 +59,6 @@ impl BaseUi {
         &self,
         page: &impl View<'a>,
     ) -> WidgetObject<'a, D, BinaryColor> {
-        let mut margin_layout = MarginLayout::new(margin!(3));
-
         let mut main_grid = GridLayoutBuilder::default()
             .add_row(12)
             .add_row(76)
@@ -95,7 +93,6 @@ impl BaseUi {
                 &FONT_5X7,
             );
         });
-        margin_layout.add_widget_obj(main_grid.finish());
-        margin_layout.finish()
+        main_grid.finish()
     }
 }
