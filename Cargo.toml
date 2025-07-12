@@ -1,3 +1,7 @@
 [workspace]
-members = ["footcomp-sim", "footcomp-ui"]
+members = [
+    "footcomp-firmware",
+    "footcomp-sim",
+    "footcomp-ui",
+]
 resolver = "2"
